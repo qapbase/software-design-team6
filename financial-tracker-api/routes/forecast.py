@@ -18,7 +18,7 @@ forecast_bp = Blueprint('forecast', __name__)
 # ══════════════════════════════════════════════════════════
 # CONFIGURATION
 # ══════════════════════════════════════════════════════════
-WINNING_MODEL = 'lstm'
+WINNING_MODEL = 'arima'
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 BASE = os.path.join(ROOT_DIR, 'ml', 'models')
 
@@ -136,7 +136,7 @@ def get_forecast():
     recommended_budget = round(sum(forecast), 2)
 
     return jsonify({
-        'model': 'LSTM (Dynamic)',
+        'model': WINNING_MODEL + ' prediction',
         'forecast': forecast,
         'recommended_budget': recommended_budget,
         'budget_label': _label(recommended_budget),
