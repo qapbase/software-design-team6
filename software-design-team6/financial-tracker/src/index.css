@@ -1,0 +1,146 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* ================================
+   GLOBAL PAGE BACKGROUND
+================================ */
+
+html, body, #root {
+  height: 100%;
+  background: #ECDFC7;
+  margin: 0;
+}
+
+
+/* ================================
+   GLOBAL THEME
+================================ */
+
+body {
+  color: #050725;
+  font-family: 'DM Sans', Inter, system-ui, sans-serif;
+}
+
+
+/* ================================
+   PREMIUM CARD SYSTEM
+================================ */
+
+/* Light Card */
+
+.card-premium {
+  background: #F4E9DA;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+
+/* Dark Dashboard Card */
+
+.card-dark {
+  background: #2C2F45;
+  border-radius: 16px;
+  padding: 24px;
+  color: white;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+
+/* Wallet Card */
+
+.card-primary {
+  background: linear-gradient(135deg,#050725,#2C2F45);
+  border-radius: 16px;
+  padding: 24px;
+  color: white;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+}
+
+
+/* ================================
+   ACCENT SYSTEM
+================================ */
+
+.text-accent {
+  color: #F9B672;
+}
+
+.border-accent {
+  border: 1px solid #F9B672;
+}
+
+.bg-accent-soft {
+  background: rgba(249,182,114,0.15);
+}
+
+
+/* ================================
+   TEXT SYSTEM
+================================ */
+
+.text-muted {
+  color: #84848A;
+}
+
+
+/* ================================
+   PREMIUM SCROLLBAR
+================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #ECDFC7;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #84848A;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2C2F45;
+}
+
+
+/* ================================
+   ANIMATIONS
+================================ */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.35s ease forwards;
+}
+
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.45s ease forwards;
+}

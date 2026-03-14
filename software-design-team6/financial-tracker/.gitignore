@@ -1,0 +1,38 @@
+# ── OS & IDE ──
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ── Environment & Secrets (CRITICAL) ──
+# Prevents leaking your Gemini API keys or Database paths
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ── Frontend (financial-tracker) ──
+node_modules/
+dist/
+build/
+*.local
+
+# ── Backend (financial-tracker-api) ──
+__pycache__/
+*.pyc
+# This ignores your local python environment
+financial-env/
+venv/
+.venv/
+
+# ── Database ──
+# Keep the schema, but don't push the local data records
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Machine Learning ──
+# Only ignore checkpoints or temp logs, but keep your .h5 models
+# (Do NOT add *.h5 or *.pkl here since you need them for the API to run)
+.ipynb_checkpoints/
