@@ -1,26 +1,18 @@
 import os
-import pickle
 import numpy as np
 import traceback
-import sqlite3
-import pandas as pd
 from flask import Blueprint, jsonify
 from database.db import get_db
-
-# ML Imports
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import LSTM, Dense
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.utils import custom_object_scope
+from sklearn.neural_network import MLPRegressor
 
 forecast_bp = Blueprint('forecast', __name__)
 
 # ══════════════════════════════════════════════════════════
 # CONFIGURATION
 # ══════════════════════════════════════════════════════════
-WINNING_MODEL = 'arima'
+WINNING_MODEL = 'mlp'
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-BASE = os.path.join(ROOT_DIR, 'ml', 'models')
 
 _state = {
     'loaded': False,
@@ -31,46 +23,49 @@ _state = {
 }
 
 # ══════════════════════════════════════════════════════════
-# RETRAINING ENGINE (The "Brain" Update)
+# RETRAINING ENGINE
 # ══════════════════════════════════════════════════════════
 
 def _retrain_model(sales_data):
     """Takes raw sales list, trains the model, and updates _state"""
     try:
-        print("[forecast] 🔄 Retraining LSTM with latest database records...")
-        
+        print("[forecast] Retraining MLP model with latest database records...")
+
         # 1. Prepare Data
         data = np.array(sales_data).reshape(-1, 1)
         scaler = MinMaxScaler(feature_range=(0, 1))
-        scaled_data = scaler.fit_transform(data)
+        scaled_data = scaler.fit_transform(data).flatten()
 
         window = _state['window']
         X, y = [], []
         for i in range(window, len(scaled_data)):
-            X.append(scaled_data[i-window:i, 0])
-            y.append(scaled_data[i, 0])
-        
+            X.append(scaled_data[i-window:i])
+            y.append(scaled_data[i])
+
         X, y = np.array(X), np.array(y)
-        X = X.reshape((X.shape[0], X.shape[1], 1))
 
-        # 2. Build/Update Model Architecture
-        model = Sequential([
-            LSTM(50, activation='relu', input_shape=(window, 1)),
-            Dense(1)
-        ])
-        model.compile(optimizer='adam', loss='mse')
+        # 2. Build and Train MLP (similar capability to simple LSTM for time series)
+        model = MLPRegressor(
+            hidden_layer_sizes=(64, 32),
+            activation='relu',
+            solver='adam',
+            max_iter=500,
+            random_state=42,
+            early_stopping=True,
+            validation_fraction=0.1,
+            n_iter_no_change=20,
+        )
+        model.fit(X, y)
 
-        # 3. Train (Epochs set to 50 for speed vs accuracy balance)
-        model.fit(X, y, epochs=50, verbose=0)
-
-        # 4. Update Global State
+        # 3. Update Global State
         _state['model'] = model
         _state['scaler'] = scaler
         _state['loaded'] = True
-        print("[forecast] ✅ Retraining Complete.")
+        print("[forecast] Retraining Complete.")
         return True
     except Exception as e:
         print(f"[forecast] Retrain Error: {e}")
+        traceback.print_exc()
         return False
 
 # ══════════════════════════════════════════════════════════
@@ -79,7 +74,7 @@ def _retrain_model(sales_data):
 
 def _get_daily_sales():
     conn = get_db()
-    cur  = conn.cursor()
+    cur = conn.cursor()
     cur.execute('''
         SELECT date, SUM(total) as total_sales
         FROM sales
@@ -91,29 +86,35 @@ def _get_daily_sales():
     conn.close()
     return [r['total_sales'] for r in rows]
 
+
 def _run_forecast(sales, steps=7):
-    model  = _state['model']
+    model = _state['model']
     window = _state['window']
     scaler = _state['scaler']
 
     scaled = scaler.transform(np.array(sales).reshape(-1, 1)).flatten()
     inp = scaled[-window:].copy()
     preds = []
-    
+
     for _ in range(steps):
-        p = model.predict(inp.reshape(1, window, 1), verbose=0)[0, 0]
+        p = model.predict(inp.reshape(1, -1))[0]
         preds.append(p)
         inp = np.append(inp[1:], p)
-        
-    # Inverse scaling to get real dollar amounts
+
+    # Inverse scaling to get real peso amounts
     unscaled_preds = scaler.inverse_transform(np.array(preds).reshape(-1, 1)).flatten()
     return [round(float(v), 2) for v in unscaled_preds]
 
+
 def _label(amount):
-    if amount <= 0:      return 'No data'
-    elif amount < 5000:  return 'Low activity week'
-    elif amount < 15000: return 'Moderate sales week'
-    else:                return 'Active sales week'
+    if amount <= 0:
+        return 'No data'
+    elif amount < 5000:
+        return 'Low activity week'
+    elif amount < 15000:
+        return 'Moderate sales week'
+    else:
+        return 'Active sales week'
 
 # ══════════════════════════════════════════════════════════
 # ROUTES
@@ -122,12 +123,12 @@ def _label(amount):
 @forecast_bp.route('/forecast', methods=['GET'])
 def get_forecast():
     sales = _get_daily_sales()
-    
+
     # Validation: Need enough data to fill the "Window"
     if len(sales) < _state['window']:
         return jsonify({'error': f'Need at least {_state["window"]} days of data.'}), 400
 
-    # 🔥 THE CORE CHANGE: Retrain every time the endpoint is called
+    # Retrain every time the endpoint is called
     success = _retrain_model(sales)
     if not success:
         return jsonify({'error': 'Model training failed'}), 500
@@ -143,6 +144,7 @@ def get_forecast():
         'recent_sales': [round(float(v), 2) for v in sales[-30:]],
         'total_history_days': len(sales),
     }), 200
+
 
 @forecast_bp.route('/forecast/budget', methods=['GET'])
 def get_budget():
@@ -160,5 +162,5 @@ def get_budget():
     return jsonify({
         'recommended_budget': total,
         'label': _label(total),
-        'model': 'LSTM (Dynamic)'
+        'model': 'MLP (Dynamic)'
     }), 200

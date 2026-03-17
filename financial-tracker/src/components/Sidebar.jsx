@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CalendarDays, Bot, User } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Bot, User, Info } from "lucide-react";
 
 function Sidebar() {
 
@@ -23,6 +23,11 @@ function Sidebar() {
       name: "Profile",
       path: "/profile",
       icon: User
+    },
+    {
+      name: "About",
+      path: "/about",
+      icon: Info
     }
   ];
 

@@ -1,6 +1,12 @@
 import { Wallet } from "lucide-react"
+import { transactionsAPI } from "../../services/api"
+import useApi from "../../hooks/useApi"
 
 function WalletCard() {
+  const { data, loading } = useApi(transactionsAPI.getBalance)
+
+  const balance = data?.balance ?? 0
+
   return (
     <div className="bg-secondary text-white rounded-2xl p-6 shadow-panel">
 
@@ -12,7 +18,11 @@ function WalletCard() {
           </p>
 
           <h2 className="text-3xl font-bold mt-2">
-            ₱40,000.00
+            {loading ? (
+              <span className="inline-block w-40 h-8 bg-white/10 rounded-lg animate-pulse" />
+            ) : (
+              `₱${Math.abs(balance).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            )}
           </h2>
 
           <p className="text-xs text-neutral mt-2">
@@ -21,7 +31,7 @@ function WalletCard() {
         </div>
 
         <div className="bg-primary/60 p-3 rounded-xl">
-          <Wallet size={22}/>
+          <Wallet size={22} />
         </div>
 
       </div>
